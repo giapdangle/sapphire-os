@@ -323,7 +323,7 @@ mem_handle_t cmd2_h_process_cmd( const cmd2_header_t *cmd, int16_t len ){
         response_len = kv_i16_batch_get( data, len, buf, sizeof(buf) );
         response = buf;
     }
-    else if( cmd->cmd == CMD2_KV_SUBSCRIBE ){
+    /*else if( cmd->cmd == CMD2_KV_SUBSCRIBE ){
         
         kv_subscription_t *sub = (kv_subscription_t *)data;
         
@@ -358,7 +358,7 @@ mem_handle_t cmd2_h_process_cmd( const cmd2_header_t *cmd, int16_t len ){
         }
 
         kv_i8_unsubscribe( sub->group, sub->id, sub->ip, sub->port );
-    }
+    }*/
     else if( cmd->cmd == CMD2_SET_SECURITY_KEY ){
         
         cmd2_set_sec_key_t *k = (cmd2_set_sec_key_t *)data;

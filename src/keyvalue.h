@@ -105,14 +105,14 @@ typedef uint16_t kv_flags_t16;
 #define KV_ERR_STATUS_TYPE_MISMATCH             -6
 #define KV_ERR_STATUS_SAFE_MODE                 -7
 #define KV_ERR_STATUS_PARAMETER_NOT_SET         -8
-
+/*
 typedef struct{
     kv_grp_t8 group;
     kv_id_t8 id;
     ip_addr_t ip;
     uint16_t port;
 } kv_subscription_t;
-
+*/
 typedef int8_t ( *kv_handler_t )( 
     kv_op_t8 op,
     kv_grp_t8 group,
@@ -201,7 +201,7 @@ int8_t kv_i8_persist(
 int8_t kv_i8_notify( 
     kv_grp_t8 group,
     kv_id_t8 id );
-
+/*
 int8_t kv_i8_subscribe(
     kv_grp_t8 group,
     kv_id_t8 id,
@@ -215,7 +215,7 @@ int8_t kv_i8_unsubscribe(
     uint16_t port );
 
 void kv_v_reset_subscriptions( void );
-
+*/
 #endif
 
 

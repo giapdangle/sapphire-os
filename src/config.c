@@ -83,6 +83,8 @@ KV_SECTION_META kv_meta_t sys_cfg_kv[] = {
     { KV_GROUP_SYS_CFG, CFG_PARAM_MANUAL_DNS_SERVER,        SAPPHIRE_TYPE_IPv4,        0,                   0, cfg_i8_kv_handler,  "manual_dns_server" },
     { KV_GROUP_SYS_CFG, CFG_PARAM_MANUAL_INTERNET_GATEWAY,  SAPPHIRE_TYPE_IPv4,        0,                   0, cfg_i8_kv_handler,  "manual_internet_gateway" },
     { KV_GROUP_SYS_CFG, CFG_PARAM_ENABLE_MANUAL_IP,         SAPPHIRE_TYPE_BOOL,        0,                   0, cfg_i8_kv_handler,  "enable_manual_ip" },
+    { KV_GROUP_SYS_CFG, CFG_PARAM_KEY_VALUE_SERVER,         SAPPHIRE_TYPE_IPv4,        0,                   0, cfg_i8_kv_handler,  "key_value_server" },
+    { KV_GROUP_SYS_CFG, CFG_PARAM_KEY_VALUE_SERVER_PORT,    SAPPHIRE_TYPE_UINT16,      0,                   0, cfg_i8_kv_handler,  "key_value_server_port" },
 };
 
 
@@ -741,6 +743,7 @@ void cfg_v_default_all( void ){
     cfg_v_set_ipv4( CFG_PARAM_MANUAL_SUBNET_MASK, ip_a_addr(0,0,0,0) );
     cfg_v_set_ipv4( CFG_PARAM_MANUAL_DNS_SERVER, ip_a_addr(0,0,0,0) );
     cfg_v_set_ipv4( CFG_PARAM_MANUAL_INTERNET_GATEWAY, ip_a_addr(0,0,0,0) );
+    cfg_v_set_ipv4( CFG_PARAM_KEY_VALUE_SERVER, ip_a_addr(0,0,0,0) );
 
     cfg_v_set_u16( CFG_PARAM_802_15_4_PAN_ID, WCOM_MAC_PAN_ID_NOT_PRESENT );
     cfg_v_set_mac64( CFG_PARAM_802_15_4_MAC_ADDRESS, zeroes );

@@ -73,9 +73,9 @@ typedef uint16_t cmd2_t16;
 
 #define CMD2_SET_KV                 80
 #define CMD2_GET_KV                 81
-#define CMD2_KV_SUBSCRIBE           82
-#define CMD2_KV_RESET_SUBS          83
-#define CMD2_KV_UNSUBSCRIBE         84
+//#define CMD2_KV_SUBSCRIBE           82
+//#define CMD2_KV_RESET_SUBS          83
+//#define CMD2_KV_UNSUBSCRIBE         84
 
 #define CMD2_SET_SECURITY_KEY       90
 
