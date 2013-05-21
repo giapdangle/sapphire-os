@@ -143,6 +143,8 @@ typedef struct{
 } kv_param_status_t;
 
 
+// Messages:
+
 #define KV_MSG_TYPE_NOTIFICATION_0      1
 
 typedef struct{
@@ -156,6 +158,7 @@ typedef struct{
     // data follows
 } kv_msg_notification_t;
 #define KV_MSG_FLAGS_TIMESTAMP_VALID    0x01
+
 
 
 // prototypes:
@@ -201,6 +204,11 @@ int8_t kv_i8_persist(
 int8_t kv_i8_notify( 
     kv_grp_t8 group,
     kv_id_t8 id );
+
+void kv_v_set_server(
+    ip_addr_t ip,
+    uint16_t port );
+
 /*
 int8_t kv_i8_subscribe(
     kv_grp_t8 group,

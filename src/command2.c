@@ -111,128 +111,6 @@ mem_handle_t cmd2_h_process_cmd( const cmd2_header_t *cmd, int16_t len ){
         
         sys_v_reboot_delay( SYS_MODE_FORMAT );
     }
-
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_OPEN_FILE ){
-        
-        char *fname = (char *)data;
-        
-        // check if a file is already open
-        if( file >= 0 ){
-            
-            file = fs_f_close( file );
-        }
-
-        // open file
-        file = fs_f_open( fname, FS_MODE_WRITE_OVERWRITE | FS_MODE_CREATE_IF_NOT_FOUND );
-        
-        cmd2_file_status_t status;
-        
-        // check if file was opened
-        if( file >= 0 ){
-            
-            status.status = 0;
-        }
-        else{
-            
-            status.status = -1;
-        }
-
-        response = &status;
-        response_len = sizeof(status);
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_CLOSE_FILE ){
-        
-        if( file >= 0 ){
-            
-            file = fs_f_close( file );
-        }
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_READ_FILE ){
-        
-        // check if file is open
-        if( file >= 0 ){
-            
-            uint32_t *pos = (uint32_t *)data;
-
-            int16_t read_len = 0;
-            
-            // set position in return data
-            memcpy( buf, pos, sizeof(uint32_t) );
-
-            fs_v_seek( file, *pos );   
-            read_len = fs_i16_read( file, buf + sizeof(uint32_t), CMD2_FILE_READ_LEN );       
-            
-            response_len = read_len + sizeof(uint32_t);
-            response = buf;
-        }
-        else{
-            // file not open, don't reply
-
-            response_len = -1;
-        }
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_WRITE_FILE ){
-        
-        // check if file is open
-        if( file >= 0 ){
-
-            uint32_t *pos = (uint32_t *)data;
-
-            fs_v_seek( file, *pos );
-            fs_i16_write( file, data + sizeof(uint32_t), len - sizeof(uint32_t) );       
-        }
-        else{
-            // file not open, don't reply
-
-            response_len = -1;
-        }
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_REMOVE_FILE_OLD ){
-        
-        if( file >= 0 ){
-            
-            fs_v_delete( file );
-            file = fs_f_close( file );
-        }
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_SEEK_FILE ){
-        
-        // check if file is open
-        if( file >= 0 ){
-            
-            uint32_t *pos = (uint32_t *)data;
-            
-            fs_v_seek( file, *pos );
-        }
-        else{
-            // file not open, don't reply
-
-            response_len = -1;
-        }
-    }
-    // DEPRECATED
-    else if( cmd->cmd == CMD2_FILE_POSITION ){
-        
-        // check if file is open
-        if( file >= 0 ){
-            
-            int32_t pos = fs_i32_tell( file );
-
-            response = &pos;
-            response_len = sizeof(pos);
-        }
-        else{
-            // file not open, don't reply
-
-            response_len = -1;
-        }
-    }
     else if( cmd->cmd == CMD2_GET_FILE_ID ){
 
         file_id_t8 *id = (file_id_t8 *)buf;
@@ -323,42 +201,23 @@ mem_handle_t cmd2_h_process_cmd( const cmd2_header_t *cmd, int16_t len ){
         response_len = kv_i16_batch_get( data, len, buf, sizeof(buf) );
         response = buf;
     }
-    /*else if( cmd->cmd == CMD2_KV_SUBSCRIBE ){
-        
-        kv_subscription_t *sub = (kv_subscription_t *)data;
-        
-        // check if subscription doesn't list an IP address
-        if( ip_b_is_zeroes( sub->ip ) ){
+    else if( cmd->cmd == CMD2_SET_KV_SERVER ){
+
+        ip_addr_t *ip = (ip_addr_t *)data;
+        uint16_t *port = (uint16_t *)(ip + 1);
+
+        // check if command doesn't list an IP address
+        if( ip_b_is_zeroes( *ip ) ){
             
             // use command socket source address
             sock_addr_t raddr;
             sock_v_get_raddr( sock, &raddr );
 
-            sub->ip = raddr.ipaddr;
+            *ip = raddr.ipaddr;
         }
 
-        kv_i8_subscribe( sub->group, sub->id, sub->ip, sub->port );
+        kv_v_set_server( *ip, *port );
     }
-    else if( cmd->cmd == CMD2_KV_RESET_SUBS ){
-        
-        kv_v_reset_subscriptions();
-    }
-    else if( cmd->cmd == CMD2_KV_UNSUBSCRIBE ){
-        
-        kv_subscription_t *sub = (kv_subscription_t *)data;
-        
-        // check if subscription doesn't list an IP address
-        if( ip_b_is_zeroes( sub->ip ) ){
-            
-            // use command socket source address
-            sock_addr_t raddr;
-            sock_v_get_raddr( sock, &raddr );
-
-            sub->ip = raddr.ipaddr;
-        }
-
-        kv_i8_unsubscribe( sub->group, sub->id, sub->ip, sub->port );
-    }*/
     else if( cmd->cmd == CMD2_SET_SECURITY_KEY ){
         
         cmd2_set_sec_key_t *k = (cmd2_set_sec_key_t *)data;
