@@ -1,0 +1,23 @@
+{
+    "_comment": "this is the project name.",
+    "_comment": "the project name is used by the build system",
+    "_comment": "to identify and search for projects",
+    "PROJ_NAME": "gateway",
+
+    "_comment": "project version",
+    "PROJ_VERSION": "0.8",
+
+    "_comment": "firmware ID",
+    "_comment": "this is automatically generated",
+    "_comment": "and should not be modified",
+    "FWID": "e966b682-ce7c-4c80-8373-2f1ee344e39d",
+
+    "_comment": "select build type:",
+    "_comment": "app - builds as a standalone application",
+    "_comment": "os - build as operating system library",
+    "_comment": "loader - build as boot loader application",
+    "_comment": "lib - build as a library",
+ 	"BUILD_TYPE": "app",
+
+    "LIBRARIES": ["dns"]
+}

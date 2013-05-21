@@ -49,16 +49,6 @@ typedef uint16_t cmd2_t16;
 
 #define CMD2_FORMAT_FS              10
 
-// DEPRECATED
-#define CMD2_OPEN_FILE              11
-#define CMD2_CLOSE_FILE             12
-#define CMD2_READ_FILE              13
-#define CMD2_WRITE_FILE             14
-#define CMD2_REMOVE_FILE_OLD        15
-#define CMD2_DISK_USAGE             16
-#define CMD2_SEEK_FILE              17
-#define CMD2_FILE_POSITION          18
-
 #define CMD2_GET_FILE_ID            20
 #define CMD2_CREATE_FILE            21
 #define CMD2_READ_FILE_DATA         22
@@ -73,9 +63,7 @@ typedef uint16_t cmd2_t16;
 
 #define CMD2_SET_KV                 80
 #define CMD2_GET_KV                 81
-#define CMD2_KV_SUBSCRIBE           82
-#define CMD2_KV_RESET_SUBS          83
-#define CMD2_KV_UNSUBSCRIBE         84
+#define CMD2_SET_KV_SERVER          85
 
 #define CMD2_SET_SECURITY_KEY       90
 

@@ -117,6 +117,9 @@
 
 #define CFG_PARAM_ENABLE_MANUAL_IP              53
 
+#define CFG_PARAM_KEY_VALUE_SERVER              54
+#define CFG_PARAM_KEY_VALUE_SERVER_PORT         55
+
 
 // Key IDs
 #define CFG_KEY_WCOM_AUTH                       0

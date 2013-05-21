@@ -43,8 +43,9 @@ KV_SECTION_META kv_meta_t kv_cfg[] = {
     { KV_GROUP_SYS_CFG, CFG_PARAM_MAX_KV_SUBSCRIPTIONS, SAPPHIRE_TYPE_UINT16, 0, 0, cfg_i8_kv_handler,  "max_kv_subscriptions" },
 };
 
-static list_t subscription_list;
 static list_t notification_list;
+
+static socket_t sock;
 
 typedef struct{;
     kv_grp_t8 group;
@@ -84,33 +85,6 @@ static uint16_t kv_meta_vfile_handler(
             break;
 
         case FS_VFILE_OP_DELETE:
-            kv_v_reset_subscriptions();
-            break;
-
-        default:
-            len = 0;
-            break;
-    }
-
-    return len;
-}
-
-static uint16_t kv_sub_vfile_handler( 
-    vfile_op_t8 op, 
-    uint32_t pos, 
-    void *ptr, 
-    uint16_t len )
-{
-    
-    // the pos and len values are already bounds checked by the FS driver
-    switch( op ){
-        
-        case FS_VFILE_OP_READ:
-            list_u16_flatten( &subscription_list, pos, ptr, len );
-            break;
-
-        case FS_VFILE_OP_SIZE:
-            len = list_u16_size( &subscription_list );
             break;
 
         default:
@@ -221,11 +195,9 @@ void kv_v_init( void ){
     // clear index
     memset( kv_index, 0xff, sizeof(kv_index) );
 
-    list_v_init( &subscription_list );
     list_v_init( &notification_list );
 
     fs_f_create_virtual( PSTR("kvmeta"), kv_meta_vfile_handler );
-    fs_f_create_virtual( PSTR("kvsubs"), kv_sub_vfile_handler );
     
     // check if safe mode
     if( sys_u8_get_mode() != SYS_MODE_SAFE ){
@@ -903,159 +875,38 @@ int8_t kv_i8_notify(
     return KV_ERR_STATUS_OK;
 }
 
-int8_t kv_i8_subscribe(
-    kv_grp_t8 group,
-    kv_id_t8 id,
+void kv_v_set_server(
     ip_addr_t ip,
-    uint16_t port )
-{
+    uint16_t port ){
 
-    // check if safe mode
-    if( sys_u8_get_mode() == SYS_MODE_SAFE ){
-        
-        return KV_ERR_STATUS_SAFE_MODE;
+    ip_addr_t current_ip;
+    uint16_t current_port;
+
+    // get current config
+    cfg_i8_get( CFG_PARAM_KEY_VALUE_SERVER, &current_ip );
+    cfg_i8_get( CFG_PARAM_KEY_VALUE_SERVER_PORT, &current_port );
+
+    // is server already set?
+    if( ( ip_b_addr_compare( current_ip, ip ) ) &&
+        ( current_port == port ) ){
+
+        return;
     }
-    
-    list_node_t ln;
 
-    // get max subscribers from config
-    uint16_t max_subscribers;
-    cfg_i8_get( CFG_PARAM_MAX_KV_SUBSCRIPTIONS, &max_subscribers );
-
-    // check subscriber list size
-    if( list_u8_count( &subscription_list ) >= max_subscribers ){
-        
-        // throw away the oldest
-        ln = list_ln_remove_tail( &subscription_list );
-
-        if( ln >= 0 ){
-            
-            list_v_release_node( ln );
-        }
-    }
-    
-    // check if we already have this subscription
-    ln = subscription_list.head;
-    
-    while( ln >= 0 ){
-        
-        kv_subscription_t *sub = list_vp_get_data( ln );
-        
-        if( ( sub->group == group ) &&
-            ( sub->id == id ) &&
-            ( ip_b_addr_compare( sub->ip, ip ) ) &&
-            ( sub->port == port ) ){
-            
-            return KV_ERR_STATUS_OK;
-        }
-
-        ln = list_ln_next( ln );
-    }
-    
-    // create subscription
-    kv_subscription_t sub;
-
-    sub.group   = group;
-    sub.id      = id;
-    sub.ip      = ip;
-    sub.port    = port;
-    
-    ln = list_ln_create_node( &sub, sizeof(sub) );
-    
-    if( ln >= 0 ){
-        
-        list_v_insert_head( &subscription_list, ln );
-    }
-    
-    return KV_ERR_STATUS_OK;
+    // set server config
+    cfg_v_set( CFG_PARAM_KEY_VALUE_SERVER, &ip );
+    cfg_v_set( CFG_PARAM_KEY_VALUE_SERVER_PORT, &port );
 }
 
-
-int8_t kv_i8_unsubscribe(
-    kv_grp_t8 group,
-    kv_id_t8 id,
-    ip_addr_t ip,
-    uint16_t port )
-{
-
-    list_node_t ln;
-
-    // look for subscription
-    ln = subscription_list.head;
-    
-    while( ln >= 0 ){
-        
-        kv_subscription_t *sub = list_vp_get_data( ln );
-        
-        if( ( sub->group == group ) &&
-            ( sub->id == id ) &&
-            ( ip_b_addr_compare( sub->ip, ip ) ) &&
-            ( sub->port == port ) ){
-            
-            // remove subscription
-            list_v_remove( &subscription_list, ln );
-            list_v_release_node( ln );
-
-            return KV_ERR_STATUS_OK;
-        }
-
-        ln = list_ln_next( ln );
-    }
-    
-    return KV_ERR_STATUS_OK;
-}
-
-void kv_v_reset_subscriptions( void ){
-    
-    list_v_destroy( &subscription_list );
-}
-
-
-typedef struct{
-    socket_t sock;
-    ip_addr_t target_ip;
-    uint16_t target_port;
-    uint16_t data_len;
-    // data follows
-    uint8_t data; // first byte
-} sender_state_t;
-
-PT_THREAD( notification_sender_thread( pt_t *pt, sender_state_t *state ) )
-{
-PT_BEGIN( pt );  
-    
-    // create socket
-    state->sock = sock_s_create( SOCK_UDPX_CLIENT );
-    
-    // check if socket was created
-    if( state->sock < 0 ){
-        
-        THREAD_EXIT( pt );
-    }
-
-    // set target address
-    sock_addr_t raddr;
-    raddr.ipaddr = state->target_ip;
-    raddr.port   = state->target_port;
-    
-    // transmit data
-    sock_i16_sendto( state->sock, 
-                     &state->data,
-                     state->data_len,
-                     &raddr );
-    
-    // wait for response or timeout
-    THREAD_WAIT_WHILE( pt, sock_i8_recvfrom( state->sock ) < 0 );
-    
-    // release socket
-    sock_v_release( state->sock );
-
-PT_END( pt );
-}
 
 PT_THREAD( notifications_processor_thread( pt_t *pt, void *state ) )
 {
 PT_BEGIN( pt );  
+
+    // create socket
+    sock = sock_s_create( SOCK_UDPX_CLIENT );
+
+    ASSERT( sock >= 0 );
     
     while(1){
         
@@ -1070,9 +921,37 @@ PT_BEGIN( pt );
         
         ASSERT( notif_ln >= 0 );
 
-        // get event data
+        // get server address
+        sock_addr_t raddr;
+        cfg_i8_get( CFG_PARAM_KEY_VALUE_SERVER, &raddr.ipaddr );
+        cfg_i8_get( CFG_PARAM_KEY_VALUE_SERVER_PORT, &raddr.port );
+
+        if( ip_b_is_zeroes( raddr.ipaddr ) ||
+            ip_b_addr_compare( raddr.ipaddr, ip_a_addr(255,255,255,255) ) ){
+
+            // release notification
+            list_v_release_node( notif_ln );
+
+            continue;
+        }
+
+        // get data
         kv_msg_notification_t *notif = list_vp_get_data( notif_ln );
         
+        // transmit data
+        sock_i16_sendto( sock, 
+                         notif,
+                         list_u16_node_size( notif_ln ),
+                         &raddr );
+
+        // release notification
+        list_v_release_node( notif_ln );
+
+        // wait for response or timeout
+        THREAD_WAIT_WHILE( pt, sock_i8_recvfrom( sock ) < 0 );
+    
+
+        /*
         // iterate through subscriptions
         list_node_t sub_ln = subscription_list.head;
         
@@ -1111,9 +990,7 @@ PT_BEGIN( pt );
             
             sub_ln = list_ln_next( sub_ln );
         }
-
-        // release notification
-        list_v_release_node( notif_ln );
+        */
     }
 
 PT_END( pt );
